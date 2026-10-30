@@ -1,0 +1,29 @@
+{
+  "steps": [
+    {
+      "prompt": "00-context.md",
+      "outputFile": "00-context.output.md",
+      "seconds": 3,
+      "outputTokens": 631,
+      "mode": "conversation",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "01-login.md",
+      "outputFile": "01-login.output.md",
+      "seconds": 4,
+      "outputTokens": 1627,
+      "mode": "conversation",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "02-dashboard.md",
+      "outputFile": "02-dashboard.output.md",
+      "seconds": 25,
+      "outputTokens": 1890,
+      "mode": "conversation",
+      "model": "openai/gpt-oss-120b"
+    }
+  ],
+  "note": "Step 04 did not complete in this run: Groq strict JSON mode rejected a truncated reply (HTTP 400 json_validate_failed). Strict mode was removed from the script; the complete v3 run is run-3."
+}

@@ -1,0 +1,646 @@
+{
+  "modules": [
+    {
+      "name": "Login | Dashboard | REST API",
+      "cases": [
+        {
+          "id": "TC-LOGIN-001",
+          "title": "Valid login",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "smoke",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=valid_user@test.com, password=Passw0rd"
+          ],
+          "steps": [
+            "Navigate to https://practice.expandtesting.com/notes/app/login",
+            "Enter \"valid_user@test.com\" into element with test id \"login-email\"",
+            "Enter \"Passw0rd\" into element with test id \"login-password\"",
+            "Click element with test id \"login-submit\""
+          ],
+          "expected": [
+            "Browser URL is exactly \"https://practice.expandtesting.com/notes/app/\"",
+            "localStorage contains key \"token\" with a non‑empty string value",
+            "Network request POST https://practice.expandtesting.com/notes/api/users/login responded with status 200",
+            "Response body field \"data.token\" equals the value stored in localStorage \"token\""
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-002",
+          "title": "Invalid credentials – unknown email",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "security",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=known_user@test.com, password=Passw0rd"
+          ],
+          "steps": [
+            "Navigate to https://practice.expandtesting.com/notes/app/login",
+            "Enter \"unknown_user@test.com\" into element with test id \"login-email\"",
+            "Enter \"Passw0rd\" into element with test id \"login-password\"",
+            "Click element with test id \"login-submit\""
+          ],
+          "expected": [
+            "Toast element with test id \"alert-message\" contains exactly \"Incorrect email address or password\"",
+            "Browser URL remains exactly \"https://practice.expandtesting.com/notes/app/login\"",
+            "localStorage does NOT contain key \"token\""
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-003",
+          "title": "Invalid credentials – wrong password",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "security",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=user_pw@test.com, password=Correct1"
+          ],
+          "steps": [
+            "Navigate to https://practice.expandtesting.com/notes/app/login",
+            "Enter \"user_pw@test.com\" into element with test id \"login-email\"",
+            "Enter \"WrongPass\" into element with test id \"login-password\"",
+            "Click element with test id \"login-submit\""
+          ],
+          "expected": [
+            "Toast element with test id \"alert-message\" contains exactly \"Incorrect email address or password\"",
+            "Browser URL remains exactly \"https://practice.expandtesting.com/notes/app/login\"",
+            "localStorage does NOT contain key \"token\""
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-004",
+          "title": "User enumeration resistance",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "security",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=enum_user@test.com, password=EnumPass"
+          ],
+          "steps": [
+            "Attempt to login with email \"nonexistent@test.com\" and password \"any\"",
+            "Attempt to login with email \"enum_user@test.com\" and password \"BadPass\""
+          ],
+          "expected": [
+            "Toast element with test id \"alert-message\" contains exactly \"Incorrect email address or password\" for the unknown email attempt",
+            "Toast element with test id \"alert-message\" contains exactly \"Incorrect email address or password\" for the wrong password attempt"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-005",
+          "title": "Forgot password request",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "smoke",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=forgot_user@test.com, password=Forgot123"
+          ],
+          "steps": [
+            "Navigate to https://practice.expandtesting.com/notes/app/forgot-password",
+            "Enter \"forgot_user@test.com\" into element with test id \"forgot-password-email\"",
+            "Click element with test id \"forgot-password-submit\""
+          ],
+          "expected": [
+            "Toast element with test id \"alert-message\" contains exactly \"If an account with that email exists, a reset link has been sent\"",
+            "Network request POST https://practice.expandtesting.com/notes/api/users/forgot-password responded with status 200"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-006",
+          "title": "Session expiry via token revocation",
+          "priority": "P0",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "session",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=expiry_user@test.com, password=ExpireMe",
+            "User logs in successfully (as in TC-LOGIN-001) and obtains token \"<token>\""
+          ],
+          "steps": [
+            "Send DELETE https://practice.expandtesting.com/notes/api/users/logout with header x-auth-token \"<token>\"",
+            "Reload https://practice.expandtesting.com/notes/app/"
+          ],
+          "expected": [
+            "Browser URL is exactly \"https://practice.expandtesting.com/notes/app/login\"",
+            "localStorage does NOT contain key \"token\""
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-007",
+          "title": "Token reuse after logout",
+          "priority": "P0",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "security",
+            "validation"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=reuse_user@test.com, password=ReusePass",
+            "User logs in successfully and stores token \"<token>\""
+          ],
+          "steps": [
+            "Send DELETE https://practice.expandtesting.com/notes/api/users/logout with header x-auth-token \"<token>\"",
+            "Send GET https://practice.expandtesting.com/notes/api/notes with header x-auth-token \"<token>\""
+          ],
+          "expected": [
+            "Response status is 401",
+            "Response body field \"message\" contains \"Invalid or revoked token\""
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-LOGIN-008",
+          "title": "Brute‑force repeated failed attempts",
+          "priority": "P2",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "validation",
+            "security"
+          ],
+          "preconditions": [
+            "A new user is registered via POST /users/register with name=TestUser, email=brute_user@test.com, password=BrutePass"
+          ],
+          "steps": [
+            "Perform 6 consecutive login attempts with email \"brute_user@test.com\" and password \"Wrong1\""
+          ],
+          "expected": [
+            "For each attempt, network request POST https://practice.expandtesting.com/notes/api/users/login responded with status 401",
+            "Toast element with test id \"alert-message\" contains exactly \"Incorrect email address or password\" on each attempt",
+            "After the 6th attempt, browser URL remains \"https://practice.expandtesting.com/notes/app/login\""
+          ],
+          "assumptions": []
+        }
+      ]
+    },
+    {
+      "name": "Login | Dashboard | REST API",
+      "cases": [
+        {
+          "id": "TC-DASH-001",
+          "title": "Widget loading on fresh login",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "smoke",
+            "validation"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | widget_load@test.com | Load1234 |  And the user logs in successfully (as in TC-LOGIN-001) and obtains token \"<token>\"",
+          "steps": "When the user navigates to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then a network request to GET https://practice.expandtesting.com/notes/api/notes with header x-auth-token \"<token>\" should have responded with status 200  And the element with test id \"progress-info\" should be visible  And at least one element with test id \"note-card\" should be present within 2 seconds",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-002",
+          "title": "Data accuracy – UI matches API source of truth",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "validation",
+            "session"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | data_match@test.com | Data1234 |  And the user logs in and obtains token \"<token>\"  And the user creates three notes via POST https://practice.expandtesting.com/notes/api/notes with header x-auth-token \"<token>\": | title | description | category | | Alpha Note | First note body | Home | | Beta Note | Second note body | Work | | Gamma Note | Third note body | Personal |",
+          "steps": "When the user navigates to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then a network request to GET https://practice.expandtesting.com/notes/api/notes should have returned a data array of length 3  And for each note returned by the API, a corresponding UI element with test id \"note-card\" must exist containing: | title | description | category | | Alpha Note | First note body | Home | | Beta Note | Second note body| Work | | Gamma Note | Third note body | Personal |",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-003",
+          "title": "Category filter shows only matching notes",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "validation",
+            "filter"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | filter_<category>@test.com | Filter123 |  And the user logs in and obtains token \"<token>\"  And the user creates the following notes via the API (header x-auth-token \"<token>\"): | title | description | category | | Home One | ... | Home | | Home Two | ... | Home | | Work One | ... | Work | | Personal One | ... | Personal |",
+          "steps": "When the user navigates to https://practice.expandtesting.com/notes/app/  And the user clicks the button with test id \"category-<category>\"",
+          "expected": "Then all visible elements with test id \"note-card\" must have a child with test id \"note-card-category\" whose text equals \"<category>\"  And the number of visible \"note-card\" elements should equal the count of notes with category \"<category>\" returned by GET https://practice.expandtesting.com/notes/api/notes  And no note with a different category should be present in the UI",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-004",
+          "title": "Category filter does not omit notes when switching categories",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "validation",
+            "filter"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | switch_filter@test.com | Switch123 |  And the user logs in and obtains token \"<token>\"  And the user creates notes: | title | description | category | | Home A | ... | Home | | Work B | ... | Work |",
+          "steps": "When the user navigates to https://practice.expandtesting.com/notes/app/  And the user clicks button \"category-work\"",
+          "expected": "Then only notes with category \"Work\" are visible  When the user clicks button \"category-home\"  Then only notes with category \"Home\" are visible  And the previously hidden \"Work B\" note is not displayed after the second click",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-005",
+          "title": "Note order reflects creation time",
+          "priority": "P2",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "validation",
+            "sort"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | sort_order@test.com | Sort1234 |  And the user logs in and obtains token \"<token>\"  And the user creates note \"First\" via API with created_at \"2024-01-01T10:00:00Z\"  And the user creates note \"Second\" via API with created_at \"2024-01-01T11:00:00Z\"",
+          "steps": "When the user navigates to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then the first visible \"note-card\" should contain a child with test id \"note-card-title\" whose text is \"Second\"  And the second visible \"note-card\" should contain a child with test id \"note-card-title\" whose text is \"First\"  When the user updates note \"First\" via PATCH /notes/:id setting completed = true  Then the order of the two cards should remain unchanged (still \"Second\" then \"First\"), confirming that completion status does not affect sorting",
+          "assumptions": [
+            "# @assumption: notes are displayed in reverse chronological order (most recent first) based on created_at."
+          ]
+        },
+        {
+          "id": "TC-DASH-006",
+          "title": "Responsive layout – controls remain usable on narrow viewport",
+          "priority": "P2",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "responsive",
+            "validation"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | responsive@test.com | Resp1234 |  And the user logs in and obtains token \"<token>\"  And the user creates a note via API",
+          "steps": "When the browser viewport is set to width 320px height 640px  And the user navigates to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then the element with test id \"add-new-note\" should be visible and clickable without horizontal scrolling  And the category filter buttons (\"category-all\", \"category-home\", \"category-work\", \"category-personal\") should each be fully visible within the viewport  And the search input with test id \"search-input\" should be usable (clickable and accepts typing)",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-007",
+          "title": "Direct URL access denied for logged‑out visitor",
+          "priority": "P0",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "security",
+            "validation"
+          ],
+          "preconditions": "no user is logged in",
+          "steps": "When the visitor navigates directly to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then the browser URL should be exactly \"https://practice.expandtesting.com/notes/app/login\"  And no element with test id \"note-card\" should be present",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-008",
+          "title": "Direct URL access denied for another logged‑in user",
+          "priority": "P0",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "security",
+            "validation"
+          ],
+          "preconditions": "user A is registered via POST /users/register with: | name | email | password | | UserA| usera@test.com | PassA123 |  And user B is registered via POST /users/register with: | name | email | password | | UserB| userb@test.com | PassB123 |  And user A creates a note titled \"Secret A\" via API  And user B logs in and obtains token \"<tokenB>\"",
+          "steps": "When user B navigates to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then the UI must NOT display any note-card with title \"Secret A\"  And a GET https://practice.expandtesting.com/notes/api/notes with header x-auth-token \"<tokenB>\" should return a data array that does NOT contain the note created by user A",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-009",
+          "title": "Widget reflects progress after note completion",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "positive",
+            "validation",
+            "session"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | progress@test.com | Prog1234 |  And the user logs in and obtains token \"<token>\"  And the user creates four notes via API, all with category \"Home\"",
+          "steps": "When the user navigates to https://practice.expandtesting.com/notes/app/",
+          "expected": "Then the element with test id \"progress-info\" should contain text \"You have 0/4 notes completed in the all categories\"  When the user toggles the completion switch (test id \"toggle-note-switch\") on the first note  Then the element with test id \"progress-info\" should update to contain text \"You have 1/4 notes completed in the all categories\"",
+          "assumptions": []
+        },
+        {
+          "id": "TC-DASH-010",
+          "title": "Unauthorized API call cannot retrieve notes",
+          "priority": "P0",
+          "type": "negative",
+          "tags": [
+            "negative",
+            "validation",
+            "security"
+          ],
+          "preconditions": "a new user is registered via POST /users/register with: | name | email | password | | DashUser | unauthorized@test.com | Unauth123 |  And the user logs in and obtains token \"<token>\"  And the user creates a note via API",
+          "steps": "When a GET request is sent to https://practice.expandtesting.com/notes/api/notes without the x-auth-token header",
+          "expected": "Then the response status should be 401  And the response body field \"message\" should contain \"Invalid or revoked token\"",
+          "assumptions": []
+        }
+      ]
+    },
+    {
+      "name": "Login | Dashboard | REST API",
+      "cases": [
+        {
+          "id": "TC-API-001",
+          "title": "Auth token required for protected endpoints",
+          "priority": "P0",
+          "type": "positive",
+          "tags": [
+            "validation",
+            "auth"
+          ],
+          "preconditions": [
+            "User registered via POST https://practice.expandtesting.com/notes/api/users/register with name=ApiUser,email=authtoken@test.com,password=Token123"
+          ],
+          "steps": [
+            "GET https://practice.expandtesting.com/notes/api/notes without header x-auth-token"
+          ],
+          "expected": [
+            "status 401",
+            "response body field \"message\" contains \"Invalid or revoked token\"",
+            "status not in 5xx range"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-002",
+          "title": "Token revoked after logout can no longer be used",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "validation",
+            "auth"
+          ],
+          "preconditions": [
+            "User registered via POST https://practice.expandtesting.com/notes/api/users/register with name=ApiUser,email=logout@test.com,password=Logout123",
+            "User logged in and token stored as <token>"
+          ],
+          "steps": [
+            "DELETE https://practice.expandtesting.com/notes/api/users/logout with header x-auth-token <token>",
+            "GET https://practice.expandtesting.com/notes/api/notes with header x-auth-token <token>"
+          ],
+          "expected": [
+            "first response status 200",
+            "second response status 401",
+            "response body field \"message\" contains \"Invalid or revoked token\"",
+            "no 5xx status in scenario"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-003",
+          "title": "Full note lifecycle (create → read → update → delete → confirm 404)",
+          "priority": "P1",
+          "type": "positive",
+          "tags": [
+            "validation",
+            "crud"
+          ],
+          "preconditions": [
+            "User registered via POST https://practice.expandtesting.com/notes/api/users/register with name=ApiUser,email=crudlife@test.com,password=Crud1234",
+            "User logged in and token stored as <token>"
+          ],
+          "steps": [
+            "POST https://practice.expandtesting.com/notes/api/notes with header x-auth-token <token> and body {title:\"Life Note\",description:\"CRUD lifecycle\",category:\"Home\"}",
+            "GET https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <token>",
+            "PATCH https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <token> and body {completed:true}",
+            "DELETE https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <token>",
+            "GET https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <token>"
+          ],
+          "expected": [
+            "create response status 200 and fields id regex, title, category, completed false, created_at/updated_at ISO‑8601",
+            "read response status 200 and title \"Life Note\"",
+            "update response status 200, completed true, updated_at later than created_at",
+            "delete response status 200",
+            "final GET response status 404 and message contains \"not found\""
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-004",
+          "title": "Note creation schema validation – missing or wrong‑type fields",
+          "priority": "P2",
+          "type": "negative",
+          "tags": [
+            "validation",
+            "schema"
+          ],
+          "preconditions": [
+            "User registered via POST https://practice.expandtesting.com/notes/api/users/register with name=ApiUser,email=scheme_<case>@test.com,password=Schema123",
+            "User logged in and token stored as <token>"
+          ],
+          "steps": [
+            "POST https://practice.expandtesting.com/notes/api/notes with header x-auth-token <token> and body using scenario outline values"
+          ],
+          "expected": [
+            "response status 400",
+            "response body field \"message\" contains <errorField>",
+            "status not in 5xx range"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-005",
+          "title": "Access another user's note – authorisation enforced",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "validation",
+            "errorhandling"
+          ],
+          "preconditions": [
+            "User A registered via POST ... with email usera@test.com,password=PassA123",
+            "User B registered via POST ... with email userb@test.com,password=PassB123",
+            "User A logged in token <tokenA>",
+            "User B logged in token <tokenB>",
+            "User A creates a note (id stored as <data.id>)"
+          ],
+          "steps": [
+            "User B GET https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <tokenB>",
+            "User B PATCH https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <tokenB> and body {\"title\":\"Hacked\"}"
+          ],
+          "expected": [
+            "first response status 404 and message contains \"not found\"",
+            "second response status 404",
+            "no 5xx status in any step"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-006",
+          "title": "Malformed ObjectId returns 400",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "validation",
+            "errorhandling"
+          ],
+          "preconditions": [
+            "User registered via POST ... with email malformedid@test.com,password=BadId123",
+            "User logged in token <token>"
+          ],
+          "steps": [
+            "GET https://practice.expandtesting.com/notes/api/notes/invalid-object-id with header x-auth-token <token>"
+          ],
+          "expected": [
+            "response status 400",
+            "response body field \"message\" contains \"ObjectId\"",
+            "status not in 5xx"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-007",
+          "title": "Duplicate registration yields 409 and no 5xx",
+          "priority": "P1",
+          "type": "negative",
+          "tags": [
+            "validation",
+            "errorhandling"
+          ],
+          "preconditions": [
+            "User registered via POST ... with email dupreg@test.com,password=Dup12345"
+          ],
+          "steps": [
+            "Repeat same registration request"
+          ],
+          "expected": [
+            "response status 409",
+            "response body field \"message\" contains \"duplicate\"",
+            "no 5xx observed"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-008",
+          "title": "Rate‑limit observation – request series does not cause 5xx",
+          "priority": "P2",
+          "type": "positive",
+          "tags": [
+            "validation",
+            "rate"
+          ],
+          "preconditions": [
+            "User registered via POST ... with email ratelimit@test.com,password=Rate1234",
+            "User logged in token <token>"
+          ],
+          "steps": [
+            "Send 20 consecutive GET https://practice.expandtesting.com/notes/api/notes with header x-auth-token <token>"
+          ],
+          "expected": [
+            "each response status 200 or 401 or 429",
+            "no response status in 5xx range",
+            "distribution of statuses recorded"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-009",
+          "title": "Note update schema validation – invalid field types",
+          "priority": "P2",
+          "type": "negative",
+          "tags": [
+            "validation",
+            "schema"
+          ],
+          "preconditions": [
+            "User registered via POST ... with email update_schema@test.com,password=Upd12345",
+            "User logged in token <token>",
+            "User creates a note (id stored as <data.id>)"
+          ],
+          "steps": [
+            "PATCH https://practice.expandtesting.com/notes/api/notes/<data.id> with header x-auth-token <token> and body {completed:\"yes\",category:123}"
+          ],
+          "expected": [
+            "response status 400",
+            "response body field \"message\" contains \"completed\"",
+            "response body field \"message\" contains \"category\"",
+            "response not 5xx"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-010",
+          "title": "GET notes list schema verification",
+          "priority": "P2",
+          "type": "positive",
+          "tags": [
+            "validation",
+            "schema"
+          ],
+          "preconditions": [
+            "User registered via POST ... with email list_schema@test.com,password=List1234",
+            "User logged in token <token>",
+            "User creates two notes: NoteOne and NoteTwo"
+          ],
+          "steps": [
+            "GET https://practice.expandtesting.com/notes/api/notes with header x-auth-token <token>"
+          ],
+          "expected": [
+            "response status 200",
+            "response body field \"data\" is array length 2",
+            "each element contains fields id (string pattern ^[0-9a-f]{24}$), title (string 4‑100), description (string 4‑1000), category (enum Home,Work,Personal), completed (boolean), created_at (ISO‑8601), updated_at (ISO‑8601), user_id (string pattern ^[0-9a-f]{24}$)"
+          ],
+          "assumptions": []
+        },
+        {
+          "id": "TC-API-011",
+          "title": "Forgot‑password request with unknown email returns 200 (no enumeration) and no 5xx",
+          "priority": "P2",
+          "type": "negative",
+          "tags": [
+            "validation",
+            "errorhandling"
+          ],
+          "preconditions": [
+            "User registered via POST ... with email forgot_known@test.com,password=Forgot123"
+          ],
+          "steps": [
+            "POST https://practice.expandtesting.com/notes/api/users/forgot-password with body {\"email\":\"nonexistent@test.com\"}"
+          ],
+          "expected": [
+            "response status 200",
+            "response body field \"message\" contains \"If an account with that email exists\"",
+            "response not 5xx"
+          ],
+          "assumptions": []
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "total": 29,
+    "byModule": {
+      "Login | Dashboard | REST API": 11
+    },
+    "byPriority": {
+      "P1": 15,
+      "P0": 6,
+      "P2": 8
+    }
+  },
+  "warnings": [],
+  "$generatedBy": "per-module conversion merged by scripts/generate-test-cases.ts (provider token limit)"
+}

@@ -1,0 +1,13 @@
+**1. System Summary (5 bullets)**  
+- The Notes app is a React SPA served at `https://practice.expandtesting.com/notes/app/` with a login page, forgot‑password page, and a logged‑in dashboard that displays note cards, category filter buttons, search, add‑note control, progress text, and a logout button. Session tokens are stored in `localStorage` under the key **`token`**.  
+- Authentication for the REST API (`https://practice.expandtesting.com/notes/api`) uses a custom header **`x-auth-token: <token>`**. Successful login (`POST /users/login`) returns the token in `data.token`. A revoked or invalid token causes the SPA to redirect to `/login`.  
+- API response envelope is `{ success, status, message, data? }`. Main endpoints: user registration, login, profile, logout (token revocation), delete‑account, forgot‑password; note CRUD (`POST /notes`, `GET /notes`, `GET|PUT|PATCH|DELETE /notes/:id`). Note IDs are 24‑hex MongoDB ObjectIds.  
+- Validation rules: login email/password fields have client‑side checks; note creation requires title 4‑100 chars, description 4‑1000 chars, category limited to `Home|Work|Personal`. API returns `400` for malformed IDs, missing/invalid fields, and `404` for unknown IDs. Duplicate registration returns `409`. Bad login returns `401`.  
+- UI behaviours: toast (`alert-message`) for server errors, inline messages for client validation, wrong credentials show “Incorrect email address or password”. Public landing page is shown when not logged in (no redirect to `/login`). Logout button triggers `DELETE /users/logout`.  
+
+**2. Ambiguities / Verification Needed**  
+- **Rate limiting:** The documentation says “not documented either way.” Need to confirm whether the API imposes any per‑IP or per‑token request limits (e.g., 100 req/min) and the response format when throttled.  
+- **Logout flow:** Does clicking the UI logout button issue `DELETE /users/logout` and then clear `localStorage.token` automatically, or is token removal purely client‑side? Need to verify the exact request/response sequence.  
+- **Forgot‑password endpoint:** Is there any rate limiting or captcha on `POST /users/forgot-password`? Also, what is the expected successful response payload (status/message only or data included)?  
+- **Token expiration:** Is the JWT (or opaque token) time‑limited, or does it remain valid until explicitly revoked via logout/delete‑account? Need to know expiry semantics for tests around session expiry.  
+- **Search and category filter implementation:** Are these performed client‑side on the already‑fetched note list, or do they trigger API calls with query parameters? Clarify the request URLs and expected response shapes for search/filter actions.

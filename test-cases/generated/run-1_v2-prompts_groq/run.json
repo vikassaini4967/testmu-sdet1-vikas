@@ -1,0 +1,48 @@
+{
+  "ranAt": "2026-10-30T05:59:59.627Z",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "steps": [
+    {
+      "prompt": "00-context.md",
+      "outputFile": "00-context.output.md",
+      "seconds": 75,
+      "outputTokens": 631,
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "01-login.md",
+      "outputFile": "01-login.output.md",
+      "seconds": 4,
+      "outputTokens": 1603,
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "02-dashboard.md",
+      "outputFile": "02-dashboard.output.md",
+      "seconds": 7,
+      "outputTokens": 2089,
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "03-api.md",
+      "outputFile": "03-api.output.md",
+      "seconds": 67,
+      "outputTokens": 2813,
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "04-to-json.md",
+      "outputFile": "04-to-json.output.json",
+      "seconds": 56,
+      "outputTokens": 6424,
+      "mode": "per-module",
+      "model": "openai/gpt-oss-120b"
+    }
+  ],
+  "usageThisInvocation": {
+    "calls": 3,
+    "inputTokens": 7609,
+    "outputTokens": 6424
+  }
+}

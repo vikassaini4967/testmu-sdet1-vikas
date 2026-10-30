@@ -1,0 +1,52 @@
+{
+  "ranAt": "2026-10-30T06:07:16.227Z",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "steps": [
+    {
+      "prompt": "00-context.md",
+      "outputFile": "00-context.output.md",
+      "seconds": 10,
+      "outputTokens": 450,
+      "mode": "conversation",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "01-login.md",
+      "outputFile": "01-login.output.md",
+      "seconds": 19,
+      "outputTokens": 1707,
+      "mode": "conversation",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "02-dashboard.md",
+      "outputFile": "02-dashboard.output.md",
+      "seconds": 44,
+      "outputTokens": 2403,
+      "mode": "conversation",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "03-api.md",
+      "outputFile": "03-api.output.md",
+      "seconds": 33,
+      "outputTokens": 1799,
+      "mode": "compacted-history",
+      "model": "openai/gpt-oss-120b"
+    },
+    {
+      "prompt": "04-to-json.md",
+      "outputFile": "04-to-json.output.json",
+      "seconds": 142,
+      "outputTokens": 7399,
+      "mode": "per-module",
+      "model": "openai/gpt-oss-120b"
+    }
+  ],
+  "usageThisInvocation": {
+    "calls": 7,
+    "inputTokens": 16110,
+    "outputTokens": 13758
+  }
+}
