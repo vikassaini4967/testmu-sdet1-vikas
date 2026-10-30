@@ -1,0 +1,23 @@
+node_modules/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Playwright output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# AI layer output — regenerated every run. Committed examples live in samples/.
+ai-reports/
+# Cross-run history (CI restores it from cache).
+.ai-history/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
