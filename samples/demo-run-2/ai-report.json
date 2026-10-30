@@ -1,0 +1,288 @@
+{
+  "runId": "run-1793339318213",
+  "status": "failed",
+  "counts": {
+    "total": 7,
+    "passed": 0,
+    "failed": 6,
+    "flaky": 1,
+    "skipped": 0
+  },
+  "model": "groq/openai/gpt-oss-120b",
+  "sharedCause": null,
+  "runSummary": "The build shows a mix of genuine application bugs, several test defects, one flaky test, and an environment issue, indicating both code problems and test maintenance needs.",
+  "buckets": {
+    "real_bug": [
+      {
+        "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO selector drift — renamed test id",
+        "testTitle": "DEMO selector drift — renamed test id",
+        "testFile": "tests/demo/ui-demo.spec.ts",
+        "verdict": "real_bug",
+        "confidence": "low",
+        "reasoning": "Timeout locating signin-button, matching perFailureAgent low‑confidence real_bug.",
+        "recentOutcomes": "F"
+      },
+      {
+        "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO real defect — page wider than a phone screen",
+        "testTitle": "DEMO real defect — page wider than a phone screen",
+        "testFile": "tests/demo/ui-demo.spec.ts",
+        "verdict": "real_bug",
+        "confidence": "high",
+        "reasoning": "Horizontal overflow detected, matching high‑confidence real_bug.",
+        "recentOutcomes": "F"
+      }
+    ],
+    "environment_issue": [
+      {
+        "testId": "demo-api::tests/demo/api-demo.spec.ts::DEMO environment — service unreachable",
+        "testTitle": "DEMO environment — service unreachable",
+        "testFile": "tests/demo/api-demo.spec.ts",
+        "verdict": "environment_issue",
+        "confidence": "high",
+        "reasoning": "Connection refused error shows external service is unreachable.",
+        "recentOutcomes": "F"
+      }
+    ],
+    "flaky_test": [
+      {
+        "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO timing race — asserts before the response lands",
+        "testTitle": "DEMO timing race — asserts before the response lands",
+        "testFile": "tests/demo/ui-demo.spec.ts",
+        "verdict": "flaky_test",
+        "confidence": "high",
+        "reasoning": "Test failed initially then passed on retry, indicating flakiness.",
+        "recentOutcomes": "~"
+      }
+    ],
+    "test_defect": [
+      {
+        "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO copy change — heading text",
+        "testTitle": "DEMO copy change — heading text",
+        "testFile": "tests/demo/ui-demo.spec.ts",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "reasoning": "Heading copy changed; test expects outdated text per summary.",
+        "recentOutcomes": "F"
+      },
+      {
+        "testId": "demo-api::tests/demo/api-demo.spec.ts::DEMO wrong status expectation — invalid login expected to succeed",
+        "testTitle": "DEMO wrong status expectation — invalid login expected to succeed",
+        "testFile": "tests/demo/api-demo.spec.ts",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "reasoning": "Test expects 200 but receives 401, a clear test‑side mistake.",
+        "recentOutcomes": "F"
+      },
+      {
+        "testId": "demo-api::tests/demo/api-demo.spec.ts::DEMO missing precondition — protected route called without a token",
+        "testTitle": "DEMO missing precondition — protected route called without a token",
+        "testFile": "tests/demo/api-demo.spec.ts",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "reasoning": "Test expects 200 while correctly getting 401, indicating wrong expectation.",
+        "recentOutcomes": "F"
+      }
+    ]
+  },
+  "knownDefects": [],
+  "failures": [
+    {
+      "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO selector drift — renamed test id",
+      "testTitle": "DEMO selector drift — renamed test id",
+      "testFile": "tests/demo/ui-demo.spec.ts",
+      "project": "demo-ui",
+      "outcome": "unexpected",
+      "attempts": 1,
+      "errorMessage": "TimeoutError: locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('signin-button')\u001b[22m\n",
+      "explanation": {
+        "summary": "Model did not return a structured summary.",
+        "rootCause": "The test is looking for a stale test‑id. The login button’s test‑id was renamed to **login-submit**, so the locator `getByTestId('signin-button')` never finds an element and times out.\n\n**Verdict:** test_defect  \n**Confidence:** high  \n**Summary:** Locator points to a renamed test‑id; element exists under a new id.  \n**Root cause:** The app renamed the submit button’s `data-testid` from `signin-button` to `login-submit`. The test still uses the old id, causing a timeout. No timing or environment issue; the test is outdated.  \n**Suggested fix:** Update the locator to the current test‑id.\n\n```ts",
+        "suggestedFix": "No fix suggested.",
+        "verdict": "real_bug",
+        "confidence": "low",
+        "toolsUsed": [
+          "get_selector_candidates",
+          "get_selector_candidates",
+          "probe_locator"
+        ],
+        "probes": [
+          {
+            "expression": "page.getByTestId('login-submit')",
+            "count": 1,
+            "visible": true,
+            "outerHtml": "<button data-testid=\"login-submit\" type=\"submit\" class=\"btn btn-lg btn-primary d-block w-100\">Login</button>"
+          }
+        ],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 4,
+          "inputTokens": 5818,
+          "outputTokens": 315
+        },
+        "steps": 4
+      }
+    },
+    {
+      "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO copy change — heading text",
+      "testTitle": "DEMO copy change — heading text",
+      "testFile": "tests/demo/ui-demo.spec.ts",
+      "project": "demo-ui",
+      "outcome": "unexpected",
+      "attempts": 1,
+      "errorMessage": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('heading', { level: 1 })\nExpected: \u001b[32m\"Sign in to your account\"\u001b[39m\nReceived: \u001b[31m\"Login\"\u001b[39m\nTimeout:  4000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('heading', { level: 1 }) with timeout 4000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { level: 1 })\u001b[22m\n\u001b[2m    12 × locator resolved to <h1>Login</h1>\u001b[22m\n\u001b[2m       - unexpected value \"Login\"\u001b[22m\n",
+      "explanation": {
+        "summary": "Heading copy changed; test expects outdated text.",
+        "rootCause": "The application now displays <h1>Login</h1> on the login page, whereas the test was written for the previous copy “Sign in to your account”. The locator is correct (it finds the <h1> element). This is a pure test‑code mismatch, not a UI or environment issue.",
+        "suggestedFix": "Update the expected text in the assertion:\n\n```ts\n// tests/demo/ui-demo.spec.ts\n- await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sign in to your account', { timeout: 4_000 });\n+ await expect(page.getByRole('heading', { level: 1 })).toHaveText('Login', { timeout: 4_000 });\n```",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "toolsUsed": [],
+        "probes": [],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 1,
+          "inputTokens": 1314,
+          "outputTokens": 276
+        },
+        "steps": 1
+      }
+    },
+    {
+      "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO real defect — page wider than a phone screen",
+      "testTitle": "DEMO real defect — page wider than a phone screen",
+      "testFile": "tests/demo/ui-demo.spec.ts",
+      "project": "demo-ui",
+      "outcome": "unexpected",
+      "attempts": 1,
+      "errorMessage": "Error: page must not scroll horizontally at 412px\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m0\u001b[39m\nReceived:    \u001b[31m90\u001b[39m",
+      "explanation": {
+        "summary": "Page overflows horizontally at 412 px viewport, violating responsive design.",
+        "rootCause": "The app’s layout does not constrain width for small viewports, causing the document’s scrollWidth to exceed clientWidth by ~90 px. No test or selector issue; the failure is deterministic and reproducible. This horizontal overflow is a user‑visible defect on mobile screens.",
+        "suggestedFix": "In the main stylesheet (e.g., `styles.css`), add a rule to prevent horizontal overflow for small screens:\n\n```css\n/* Prevent horizontal scrolling on mobile */\n@media (max-width: 420px) {\n  html, body {\n    overflow-x: hidden;\n  }\n}\n```\n\nOr adjust the container widths/flex settings so elements never exceed the viewport width.",
+        "verdict": "real_bug",
+        "confidence": "high",
+        "toolsUsed": [],
+        "probes": [],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 1,
+          "inputTokens": 1203,
+          "outputTokens": 283
+        },
+        "steps": 1
+      }
+    },
+    {
+      "testId": "demo-ui::tests/demo/ui-demo.spec.ts::DEMO timing race — asserts before the response lands",
+      "testTitle": "DEMO timing race — asserts before the response lands",
+      "testFile": "tests/demo/ui-demo.spec.ts",
+      "project": "demo-ui",
+      "outcome": "flaky",
+      "attempts": 2,
+      "errorMessage": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('alert-message')\nExpected: \u001b[32m\"Incorrect email address or password\"\u001b[39m\nTimeout: 50ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByTestId('alert-message') with timeout 50ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('alert-message')\u001b[22m\n",
+      "explanation": {
+        "summary": "Timeout too short causes assertion to fail before alert appears.",
+        "rootCause": "The test intentionally uses a 50 ms timeout on the first attempt, but the alert element is rendered after the network round‑trip, which exceeds this window. Playwright treats the timeout as a failure, and the test never reaches the retry where the longer timeout would succeed. The test logic assumes a failure on first run, but the framework aborts the test on that failure.",
+        "suggestedFix": "Replace the race‑condition assertion with a proper wait, e.g.:\n\n```ts\n// Remove artificial short timeout\nawait expect(loginPage.alert).toHaveText(\n  'Incorrect email address or password',\n  { timeout: 10_000 }\n);\n```\n\nIf you still want to verify the race, wrap the first expect in a try/catch and ignore the timeout error, then let the retry handle the real check.",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "toolsUsed": [],
+        "probes": [],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 1,
+          "inputTokens": 1268,
+          "outputTokens": 479
+        },
+        "steps": 1
+      }
+    },
+    {
+      "testId": "demo-api::tests/demo/api-demo.spec.ts::DEMO wrong status expectation — invalid login expected to succeed",
+      "testTitle": "DEMO wrong status expectation — invalid login expected to succeed",
+      "testFile": "tests/demo/api-demo.spec.ts",
+      "project": "demo-api",
+      "outcome": "unexpected",
+      "attempts": 1,
+      "errorMessage": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m401\u001b[39m",
+      "explanation": {
+        "summary": "Test expects a successful login but supplies invalid credentials.",
+        "rootCause": "The test deliberately uses a non‑existent user and wrong password, causing the API to return 401. The assertion incorrectly expects HTTP 200, so the failure is due to a wrong expectation in the test, not the application.",
+        "suggestedFix": "Update the expectation to match the API behavior:\n\n```ts\n// tests/demo/api-demo.spec.ts\n- expect(response.status()).toBe(200);\n+ expect(response.status()).toBe(401);\n``` \n\nOptionally add a comment clarifying the intent.",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "toolsUsed": [],
+        "probes": [],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 1,
+          "inputTokens": 997,
+          "outputTokens": 180
+        },
+        "steps": 1
+      }
+    },
+    {
+      "testId": "demo-api::tests/demo/api-demo.spec.ts::DEMO missing precondition — protected route called without a token",
+      "testTitle": "DEMO missing precondition — protected route called without a token",
+      "testFile": "tests/demo/api-demo.spec.ts",
+      "project": "demo-api",
+      "outcome": "unexpected",
+      "attempts": 1,
+      "errorMessage": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m401\u001b[39m",
+      "explanation": {
+        "summary": "Test expects 200 but correctly receives 401 for unauthenticated request.",
+        "rootCause": "The test deliberately clears the auth token, then calls a protected endpoint. The API returns 401 Unauthorized, which is the correct behavior. The assertion mistakenly expects a 200 OK, indicating the test was written with the wrong expected status.",
+        "suggestedFix": "Update the expectation to match the actual behavior:\n```ts\nexpect(response.status()).toBe(401);\n```",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "toolsUsed": [],
+        "probes": [],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 1,
+          "inputTokens": 952,
+          "outputTokens": 201
+        },
+        "steps": 1
+      }
+    },
+    {
+      "testId": "demo-api::tests/demo/api-demo.spec.ts::DEMO environment — service unreachable",
+      "testTitle": "DEMO environment — service unreachable",
+      "testFile": "tests/demo/api-demo.spec.ts",
+      "project": "demo-api",
+      "outcome": "unexpected",
+      "attempts": 1,
+      "errorMessage": "Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:9\nCall log:\n\u001b[2m  - → GET http://127.0.0.1:9/notes/api/health-check\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.64.1 (arm64; macOS 26.5) node/25.2\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+      "explanation": {
+        "summary": "Test expects a successful response from a deliberately closed port.",
+        "rootCause": "The test calls a health‑check endpoint on 127.0.0.1:9, a port that is intentionally closed. The request fails with ECONNREFUSED, causing `response.ok()` to be false while the assertion expects true. The test’s expectation is inverted.",
+        "suggestedFix": "Update the assertion to expect a failed response, e.g.:\n\n```ts\nconst response = await request.get('http://127.0.0.1:9/notes/api/health-check', { timeout: 5_000 });\nexpect(response.ok()).toBe(false); // service should be unreachable\n```",
+        "verdict": "test_defect",
+        "confidence": "high",
+        "toolsUsed": [],
+        "probes": [],
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "calls": 1,
+          "inputTokens": 955,
+          "outputTokens": 256
+        },
+        "steps": 1
+      }
+    }
+  ],
+  "usage": {
+    "calls": 11,
+    "inputTokens": 15127,
+    "outputTokens": 2526
+  }
+}
