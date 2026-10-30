@@ -1,6 +1,6 @@
-# v1 prompts — verbatim from the original prompts.md
+# v1 prompts — verbatim
 
-Drafted in the claude.ai session that produced the first scaffold of this repo (see ai-usage-log.md).
+The first-draft prompts that came with the initial scaffold of this repo (see ai-usage-log.md).
 Kept unedited as the starting point of the iteration recorded in prompts.md.
 
 ## Prompt 1 — context priming (run first, in a fresh conversation)

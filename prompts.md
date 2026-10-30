@@ -1,101 +1,47 @@
 # prompts.md
 
-Every prompt used to generate the Task 2 test cases, verbatim, in the order
-they evolved — plus what each version got wrong and what changed.
+The prompts I used to generate the Task 2 test cases with an LLM — verbatim,
+every version, with what didn't work and what I changed.
+
+**Model:** Groq `openai/gpt-oss-120b`, called over the API by the framework's
+prompt runner — not pasted into a chat window. The runner sends the prompts as
+one conversation and saves every reply untouched, so each claim below can be
+checked against raw output.
 
 | | |
 |---|---|
-| **Run them yourself** | `npm run generate:cases` (any key from `.env.example`) — or paste `system.md` as the system/custom instructions and `00`→`04` into **one** chat conversation |
-| **Prompt files** | [`prompts/test-generation/`](prompts/test-generation/) — the copies below are checked verbatim by `npm run check:trace` |
-| **Raw model output** | [`test-cases/generated/`](test-cases/generated/) — never edited; each run folder holds `prompts-used/` and `run.json` |
-| **Curated, automated cases** | [`test-cases/*.feature`](test-cases/) + [`test-cases.json`](test-cases/test-cases.json) |
-| **Who wrote what** | v1 drafted in claude.ai; v2/v3 drafted with Claude Code; all runs below on Groq `openai/gpt-oss-120b` — see [`ai-usage-log.md`](ai-usage-log.md) |
+| **Run them yourself** | `npm run generate:cases` — needs one key in `.env` ([`.env.example`](.env.example)); output lands in `test-cases/generated/<run>/`. Or paste `system.md` as system instructions and `00`→`04` into one conversation of any chat model. |
+| **Prompt files** | [`prompts/test-generation/`](prompts/test-generation/) — identical to the copies below (`npm run check:trace` fails CI if they drift) |
+| **Raw LLM output** | [`test-cases/generated/`](test-cases/generated/) — never edited; each run keeps `prompts-used/` and `run.json` (model, tokens, timings) |
+| **Curated, automated cases** | [`test-cases/*.feature`](test-cases/) · [`test-cases.json`](test-cases/test-cases.json) → `tests/` |
+| **AI tools used to build the repo** | [`ai-usage-log.md`](ai-usage-log.md) |
 
 ---
 
-## The shape every prompt follows
+## How I prompt
 
-The same six blocks, in the same order, in every module prompt — so a
-reviewer (or a teammate reusing them) can diff one module against another.
+Every module prompt has the same six blocks in the same order, so modules can
+be diffed against each other and the shape can be reused by the team.
 
 | Block | Why it is there |
 |---|---|
-| **TASK** | One line. What module, what output. |
-| **ROLE** | Sets the stakes: *"a case that can pass for the wrong reason is worse than no case"*. This one sentence moves output from "covers the list" to "can actually fail". |
-| **REQUIRED COVERAGE** | The brief's list, numbered, "every item, explicitly" — models silently drop items from unnumbered prose. |
-| **CONSTRAINTS** | The anti-patterns, stated as rules. The highest-leverage block: say what you *don't* want, or you get it. |
-| **OUTPUT CONTRACT** | Exact format, ID scheme, tag vocabulary, scenario count range — so output drops into the repo without reformatting. |
+| **TASK** | One line: which module, what output. |
+| **ROLE** | Sets the stakes — *"a case that can pass for the wrong reason is worse than no case."* This sentence is what moves output from "covers the list" to "can actually fail". |
+| **REQUIRED COVERAGE** | The brief's list, numbered, *"every item, explicitly"*. Models quietly drop items from unnumbered prose. |
+| **CONSTRAINTS** | The anti-patterns, stated as rules. The highest-leverage block: say what you don't want, or you get it. |
+| **OUTPUT CONTRACT** | Format, ID scheme, tag vocabulary, scenario count — so output drops into the repo without reformatting. |
 | **SELF-CHECK** | *"Could this pass while the feature is broken?"* — a cheap second pass the model runs on itself. |
 
-Context is primed **once** (`00-context.md`) with facts verified against the
-live app, and the module prompts say *"same system, same role, same output
+The system facts are given **once** (`00-context.md`), verified against the live
+app, and I ask the model to restate them and flag ambiguities *before* writing
+anything. Module prompts then say *"same system, same role, same output
 contract"*. Re-pasting context per module causes drift between modules.
 
 ---
 
-## How the prompts evolved
+## The prompts (current version, v3)
 
-| Version | Written in | What changed | Evidence |
-|---|---|---|---|
-| **v1** | claude.ai (scaffold session) | First draft: role + facts + anti-patterns + output contract | [`prompts/history/v1-claude-ai.md`](prompts/history/v1-claude-ai.md); its 24 cases were checked against the live app: 4 relied on behaviour the app doesn't have (select filter, category badge, two `/login` redirects), and the page objects behind them had 4 more wrong guesses — listed per module below |
-| **v2** | Claude Code | Facts re-written from the **live** app (real test ids, real routes, logged-out behaviour, token revocation); TASK/ROLE/…/SELF-CHECK shape; `@assumption` tag; brute-force and rate-limit cases required to be honest under either behaviour | [`run-1_v2-prompts_groq/`](test-cases/generated/run-1_v2-prompts_groq/) |
-| **v3** | Claude Code | `system.md` gained 4 global rules (facts override priors; exact messages only from facts; only listed test ids; unique test data). `04-to-json.md` placeholder fixed. Module prompts 00–03 **unchanged**, so the comparison isolates these edits | [`run-2_…`](test-cases/generated/run-2_v3-prompts_groq/) (partial), [`run-3_v3-prompts_groq/`](test-cases/generated/run-3_v3-prompts_groq/) |
-
-### Measured: v2 → v3 on the same model
-
-Counted over the raw Gherkin of each run (01–03):
-
-| Pattern | v2 (run 1) | v3 (run 3) |
-|---|---:|---:|
-| Scenarios | 29 | 31 |
-| Hard-coded emails (`x@test.com` — collide with 409 on rerun) | 36 | **0** |
-| Invented exact error messages (`"Invalid or revoked token"`, `"duplicate"`, `"ObjectId"`) | 6 | **0** |
-| Invented test id (`note-card-category`) | 1 | **0** |
-| `@assumption` tags | 1 | 3 |
-| Asserts logged-out visitor is redirected to `/login` — **contradicting a stated fact** | yes | **still yes** |
-| Proposes the forgot-password enumeration case (finds KNOWN-BUG-002) | yes (TC-API-011) | **no — lost** |
-
-The rules fixed exactly what they targeted. They did **not** fix the model
-overriding an explicit fact with its prior, and v3 lost the single most
-valuable case v2 found. Better prompts are not monotonically better output —
-which is why the curated suite below is built from *both* runs plus the live
-app, not from whichever run looked tidier.
-
----
-
-## What didn't work first time — per module
-
-### Login
-- **v1's session-expiry case cleared cookies/storage and expected a redirect to `/login`.** On the live app that shows the public landing page instead. Rewritten to revoke the browser's token server-side (`DELETE /users/logout`) — deterministic, under 5s, and the real expiry path. The v2 model independently proposed the same approach once the facts mentioned token revocation.
-- **v2 invented exact messages** (`"Invalid or revoked token"` — the real one is *"Access token is not valid or has expired…"*) and asserted on them without an `@assumption` tag. v3's "exact messages only from facts" rule took this to zero.
-- **v2 ignored "one case per failure mode"**: separate wrong-password and unknown-email cases *plus* an enumeration case covering both. Curated into one enumeration case (TC-LOGIN-003).
-- **v2's brute-force case contradicted itself** — the comment said "may lock out or throttle", the assertion said "every attempt is 401". Curated TC-LOGIN-007 accepts 401 or 429, fails on 5xx, and records which it saw.
-- **Neither version found the forgot-password enumeration from the Login prompt** — v2 found it from the API prompt. Kept as TC-LOGIN-009, which fails against the live app (KNOWN-BUG-002).
-
-### Dashboard
-- **v1 assumed a `<select>` category filter and a `note-card-category` badge.** Neither exists (four buttons; cards show no category text). Even with the real test ids listed in v2's facts, v2 invented `note-card-category` again; v3's "only listed test ids" rule stopped it.
-- **All three versions assert that a logged-out visitor is redirected to `/login`** — in v2 and v3 directly contradicting a fact in the prompt ("It does NOT redirect to /login"). v3's "facts override your expectations" rule did not fix it. Curated TC-DASH-007 asserts the real behaviour. Next thing I'd try: restate contradicting facts as explicit `DO NOT assert …` lines inside the module prompt, where the attention is.
-- **Sort was a wrong `@assumption`** in v2 and v3 ("newest first by creation; completing a note doesn't move it"). The tag did its job — it made the guess visible and took two minutes to check live: completed notes sink, ordering is by `updated_at`. Curated TC-DASH-005 tests that as behaviour.
-- **v2's cross-user case checked user B's list, not a direct URL** to user A's note, despite "test direct URLs". Curated TC-DASH-008 opens `/notes/app/notes/<A's id>` as B.
-- **v2's 320px responsive case was right** — and it fails on the live app (KNOWN-BUG-001). Kept as TC-DASH-010 with `test.fail()`.
-
-### REST API
-- **v2's TC-API-011 — "forgot-password with an unknown email returns 200, no enumeration" — fails against the live API**, which answers `401 "No account found with the given email address"`. An LLM-proposed security case catching a real defect; the best output of the exercise.
-- **v2 asserted on invented message substrings in 6 places** (`"duplicate"`, `"ObjectId"`, `"Invalid or revoked token"`), several of which would fail on wording alone while the behaviour is correct. v3: zero.
-- **v3 produced invalid Gherkin** (`Scenario TC-API-001:` instead of `Scenario: TC-API-001`). Cause: Groq's free tier caps a request at 8k tokens, so the runner elided earlier module outputs for this step — and with them the format example the model had been copying. Format examples matter as much as rules.
-- **Kept from the generated cases:** one CRUD lifecycle ending in a 404 re-read, ObjectId / ISO-8601 / enum format checks, IDOR on read *and* write, and a rate-limit case that passes under either behaviour.
-- **Added by curation:** malformed-JSON error envelope (TC-API-013), which found KNOWN-BUG-003 — no prompt version produced it.
-
-### JSON conversion
-- **v2's SHAPE line `"name": "Login | Dashboard | REST API"` was copied literally into all three modules.** An example that looks like a value gets used as one; v3 uses `"<the module's name: …>"` and got it right.
-- **Free-tier limits shaped the runner, not the prompt:** the conversion didn't fit Groq's 8k tokens-per-minute in one request, so `generate:cases` converts per module and merges + counts in code (arithmetic belongs in code); Groq's strict JSON mode rejected a truncated reply, so it was dropped for lenient parsing.
-- **No padding:** 31 scenarios in, 31 cases out, `warnings: []` — the "say so instead of padding" rule held.
-
----
-
-## Current prompts (v3) — verbatim
-
-### `system.md`
+### `system.md` — system instructions
 
 ```text
 You are a senior SDET who writes release-gating regression suites. You are precise about what is observable, sceptical of assumptions, and you would rather report a gap than write a test that passes for the wrong reason.
@@ -109,7 +55,7 @@ Rules that apply to every answer:
 Follow the OUTPUT CONTRACT in each message exactly. Do not add commentary outside the requested format unless the message asks for it.
 ```
 
-### `00-context.md`
+### `00-context.md` — prime the facts, no test cases yet
 
 ```text
 I'm building a regression suite for a web app and its REST API. Before any test cases, hold the system facts below so later answers don't invent UI or endpoints that don't exist. Every fact here was verified against the live system on 2026-10-30.
@@ -253,10 +199,66 @@ OUTPUT CONTRACT: only the JSON object — no markdown fence, no prose.
 
 ---
 
-## Earlier versions — verbatim
+## What didn't work first time — per module
+
+### Login
+- Session expiry first expected cleared cookies to redirect to `/login`; the live app shows its public landing page instead → I switched to revoking the browser's token server-side (`DELETE /users/logout`): deterministic, under 5 s.
+- The model invented exact error text (`"Invalid or revoked token"`) → v3 rule: exact messages only when the facts give them. Invented messages went from 6 to 0.
+- It split wrong-password and unknown-email into separate cases despite "one case per failure mode" → merged into one enumeration case (TC-LOGIN-003).
+- The brute-force case said "may lock out" yet asserted "always 401" → now accepts 401 or 429, fails on 5xx, and records which it saw.
+
+### Dashboard
+- First version assumed a `<select>` category filter and a category badge on each card; neither exists → filter through the real `category-*` buttons and compare titles against the seeded data.
+- Every version asserted a logged-out visitor is redirected to `/login` — even after I stated the opposite as a fact → TC-DASH-007 asserts the real behaviour; next I'd restate it as an explicit "DO NOT assert" line inside the module prompt.
+- Sort order came back as a wrong `@assumption` (creation order) → checked live: completed notes sink, newest update first; TC-DASH-005 tests it as behaviour.
+- The cross-user case checked the note list, not a direct URL → TC-DASH-008 opens the other user's note by URL.
+
+### REST API
+- Best result of the exercise: the model proposed "forgot-password must not reveal whether an account exists" — it **fails on the live API** (KNOWN-BUG-002), so it became TC-LOGIN-009.
+- It asserted invented message substrings (`"duplicate"`, `"ObjectId"`) that would fail on wording alone → removed by the v3 "facts only" rule.
+- Compacting history to fit the free tier's 8k-token limit dropped the format example, and v3 returned invalid Gherkin (`Scenario TC-API-001:`) → next: keep the first module's output as the format exemplar.
+- Added during review: malformed-JSON error envelope (TC-API-013) — it found KNOWN-BUG-003.
+
+### JSON conversion
+- My shape example `"name": "Login | Dashboard | REST API"` was copied literally into every module → v3 uses a `<placeholder>`.
+- The conversion didn't fit 8k tokens/minute in one request → the runner converts per module and computes coverage in code.
+- No padding: 31 scenarios in, 31 cases out, `warnings: []`.
+
+---
+
+## How the prompts evolved
+
+| Version | What changed | Run with | Evidence |
+|---|---|---|---|
+| **v1** | First draft: role, facts, anti-patterns, output contract | — (came with the first scaffold) | [`prompts/history/v1-claude-ai.md`](prompts/history/v1-claude-ai.md). Of its 24 cases, 4 relied on behaviour the live app doesn't have (select filter, category badge, two `/login` redirects) |
+| **v2** | Facts rewritten from the **live** app (real test ids, routes, logged-out behaviour, token revocation); the six-block shape; `@assumption` tag; honest-under-either-behaviour rule for lockout and rate limits | `gpt-oss-120b` via API | [`run-1_v2-prompts_groq/`](test-cases/generated/run-1_v2-prompts_groq/) |
+| **v3** | 4 global rules in `system.md`: facts override priors · exact messages only from facts · only listed test ids · unique test data. JSON placeholder fixed. Module prompts 00–03 **unchanged**, so the comparison isolates these edits | `gpt-oss-120b` via API | [`run-2_…`](test-cases/generated/run-2_v3-prompts_groq/) (stopped at step 04), [`run-3_v3-prompts_groq/`](test-cases/generated/run-3_v3-prompts_groq/) |
 
 <details>
-<summary><b>v2</b> — <code>system.md</code> and <code>04-to-json.md</code> as run in run 1 (00–03 were identical to v3)</summary>
+<summary><b>Measured: v2 → v3 on the same model</b></summary>
+
+Counted over the raw Gherkin of each run (prompts 01–03):
+
+| Pattern | v2 (run 1) | v3 (run 3) |
+|---|---:|---:|
+| Scenarios | 29 | 31 |
+| Hard-coded emails (`x@test.com` — collide with 409 on rerun) | 36 | **0** |
+| Invented exact error messages | 6 | **0** |
+| Invented test id (`note-card-category`) | 1 | **0** |
+| `@assumption` tags | 1 | 3 |
+| Asserts logged-out visitor is redirected to `/login`, contradicting a stated fact | yes | **still yes** |
+| Proposes the forgot-password enumeration case (finds KNOWN-BUG-002) | yes | **no — lost** |
+
+The rules fixed exactly what they targeted. They did not stop the model
+overriding an explicit fact with its prior, and v3 lost the most valuable case
+v2 found. Better prompts are not monotonically better output — so the curated
+suite is built from **both** runs plus the live app, not from whichever run
+looked tidier.
+
+</details>
+
+<details>
+<summary><b>v2</b> — <code>system.md</code> and <code>04-to-json.md</code> as run in run 1 (00–03 identical to v3)</summary>
 
 `system.md` (v2):
 
@@ -293,7 +295,7 @@ OUTPUT CONTRACT: only the JSON object — no markdown fence, no prose.
 </details>
 
 <details>
-<summary><b>v1</b> — the five prompts from the claude.ai scaffold session</summary>
+<summary><b>v1</b> — the five first-draft prompts</summary>
 
 #### Prompt 1 — context priming (run first, in a fresh conversation)
 
@@ -430,20 +432,20 @@ Rules:
 
 ---
 
-## The runtime prompts (Task 3) iterated the same way
+## The runtime prompts (Task 3) were iterated the same way
 
-The failure explainer and classifier prompts live in code
+The failure-explainer and classifier prompts live in code
 ([`failure-explainer.ts`](src/ai/failure-explainer.ts),
-[`flaky-classifier.ts`](src/ai/flaky-classifier.ts)) and were revised from
-real demo runs on `gpt-oss-120b` — outputs for every run are in
+[`flaky-classifier.ts`](src/ai/flaky-classifier.ts)) and were revised from four
+real demo runs on `gpt-oss-120b` — every run's output is in
 [`samples/`](samples/README.md):
 
 | Run | Observed | Change |
 |---|---|---|
-| 1 | Agent found and verified `login-submit`, wrote "test id renamed" — and labelled it **real_bug**. Verdict rules only defined `test_defect` for text/status assertions. | Verdict defined by *where* the defect is; selector drift named explicitly. Added "preserve what the test proves — never weaken an assertion to make it pass". |
-| 2 | Right diagnosis, but written as markdown instead of the tag block → parser defaulted to real_bug. | One **self-correction turn** when the block is missing, instead of a silent default. |
-| 3 | Classifier, told to prefer test_defect for test-side causes, filed a failed-then-passed test as test_defect. | "Flaky outcome is always flaky_test" in the prompt **and** enforced in code — hard evidence shouldn't depend on prompt compliance. Demo specs' explanatory comments moved away from the failing lines (they were handing the agent the answer). |
-| 4 | All 7 failures in the intended bucket; verified locator; missing-precondition fix is "add a login step, keep the 200 assertion". | — |
+| 1 | The agent found and **verified** `login-submit`, wrote "test id renamed" — and labelled it `real_bug`. | Verdict defined by *where* the defect is; selector drift named explicitly; "never weaken an assertion to make a test pass". |
+| 2 | Right diagnosis, wrong format (markdown, not the tag block) → parsed as `real_bug` by default. | One self-correction turn when the block is missing, instead of a silent default. |
+| 3 | The classifier filed a failed-then-passed test under `test_defect` — an over-correction of run 1's fix. | "Flaky outcome is always flaky_test" in the prompt **and** enforced in code. Explanatory comments moved away from the failing lines in the demo specs — they were handing the agent the answer. |
+| 4 | 7/7 failures in the intended bucket; verified locator; missing-login fix keeps the 200 assertion. | — |
 
 ---
 
@@ -470,7 +472,7 @@ OUTPUT CONTRACT: <format, ID scheme, tags, count range>. Nothing outside it.
 SELF-CHECK: for each case, "could this pass while the feature is broken?"
 ```
 
-The constraint I'd keep above all others: **permission to report a gap.** A
-model's default is to satisfy the request — it will write a plausible test for
+The constraint I'd keep above all others is **permission to report a gap**. A
+model's default is to satisfy the request: it will write a plausible test for
 behaviour that doesn't exist rather than say it doesn't exist. `@assumption`
-turns those guesses into a list you can check in minutes.
+turns those guesses into a list you can check against the live app in minutes.

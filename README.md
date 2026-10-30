@@ -15,6 +15,11 @@ run-level classifier then buckets every failure using history from previous runs
 > between "CI is red" and "oh, the test id was renamed", on every red build.
 > That is what this attacks — and it does it on a **free-tier** model.
 
+**Stack:** Playwright · TypeScript · zod · **LLM: Groq `openai/gpt-oss-120b`**,
+called over the API — it generates the test cases from the prompts (Task 2)
+and diagnoses failing tests inside the run (Task 3). Swappable for Gemini,
+Cerebras, OpenRouter, Anthropic or a local model with one env var.
+
 | Brief | Where |
 |---|---|
 | Task 1 — scaffold | `src/` · `tests/` · CI — [layout](#layout) |
@@ -52,7 +57,7 @@ cd Testmu-sdet1-vikas
 npm install
 npx playwright install chromium
 
-cp .env.example .env     # add ONE free key: GROQ_API_KEY or GEMINI_API_KEY
+cp .env.example .env     # paste a free Groq key into GROQ_API_KEY (model is preset)
 
 npm run verify:target    # is the app up, does the API contract still match?
 npm run verify:llm       # does the key work — and does the model call tools?
@@ -71,7 +76,9 @@ npm run demo             # then: ai-reports/ai-report.md, or npm run report → 
 npm run demo             # run it again: the History column now shows the previous run
 ```
 
-**Run the Task 2 prompts yourself:** `npm run generate:cases` → `test-cases/generated/<run>/`.
+**Run the Task 2 prompts yourself:** `npm run generate:cases` sends the prompts
+to the LLM as one conversation and saves the raw output to
+`test-cases/generated/<run>/` — see [prompts.md](prompts.md).
 
 ---
 
@@ -142,11 +149,11 @@ run ends ─► reporter (src/reporters/ai-reporter.ts)
 
 ## Task 2 — prompts
 
-Five prompts in one conversation — context primed once with facts verified on
-the live app, then Login, Dashboard, API, and a JSON conversion — all in the
-same six-block shape (TASK · ROLE · REQUIRED COVERAGE · CONSTRAINTS · OUTPUT
-CONTRACT · SELF-CHECK). Three versions, two measured runs, per-module notes on
-what didn't work: **[prompts.md](prompts.md)**.
+Five prompts sent to the LLM as one conversation — context primed once with
+facts verified on the live app, then Login, Dashboard, API, and a JSON
+conversion — all in the same six-block shape (TASK · ROLE · REQUIRED COVERAGE ·
+CONSTRAINTS · OUTPUT CONTRACT · SELF-CHECK). Three versions, two measured runs
+on `gpt-oss-120b`, per-module notes on what didn't work: **[prompts.md](prompts.md)**.
 
 The automated suite is **curated**, not pasted: generated cases were kept,
 merged or corrected against the live app, and `npm run check:trace` keeps the
@@ -185,8 +192,8 @@ All optional except one LLM key — see [`.env.example`](.env.example).
 
 | Variable | Default | |
 |---|---|---|
-| `GROQ_API_KEY` / `GEMINI_API_KEY` / … | — | First key found picks the provider |
-| `AI_PROVIDER`, `AI_MODEL` | auto / per provider | Override either |
+| `GROQ_API_KEY` | — | The one required value |
+| `AI_PROVIDER`, `AI_MODEL` | `groq`, `openai/gpt-oss-120b` | Preset in `.env.example`; other providers listed there |
 | `AI_EXPLAIN` | on when a key is set | `0` = run with zero LLM calls |
 | `AI_MAX_CALLS_PER_RUN` | 10 | Failures triaged per run (CI: 6) |
 | `AI_MAX_AGENT_STEPS` | 5 | Tool round-trips per failure |
