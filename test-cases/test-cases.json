@@ -1,0 +1,76 @@
+{
+  "$comment": "Machine-readable mirror of the .feature files. `id` is the join key to the Playwright test titles; `npm run check:trace` fails CI if the three drift apart.",
+  "target": {
+    "ui": "https://practice.expandtesting.com/notes/app/",
+    "api": "https://practice.expandtesting.com/notes/api",
+    "verifiedAgainstLiveTarget": "2026-10-30"
+  },
+  "modules": [
+    {
+      "name": "Login",
+      "feature": "test-cases/login.feature",
+      "spec": "tests/login/login.spec.ts",
+      "cases": [
+        { "id": "TC-LOGIN-001", "title": "Valid credentials land the user on the dashboard", "priority": "P0", "type": "positive", "tags": ["smoke"], "expected": "Logout + add-note visible; URL /notes/app/; token in localStorage" },
+        { "id": "TC-LOGIN-002", "title": "Wrong password is rejected and no session is created", "priority": "P0", "type": "negative", "tags": ["security"], "expected": "Toast 'Incorrect email address or password'; stays on /login; no token stored" },
+        { "id": "TC-LOGIN-003", "title": "Unknown email and wrong password are indistinguishable", "priority": "P1", "type": "negative", "tags": ["security", "enumeration"], "expected": "Identical message; both 401" },
+        { "id": "TC-LOGIN-004", "title": "Malformed email is rejected client-side without a network call", "priority": "P2", "type": "negative", "tags": ["validation"], "expected": "Inline 'Email address is invalid'; zero requests to /users/login" },
+        { "id": "TC-LOGIN-005", "title": "Forgot password link reaches the recovery form", "priority": "P1", "type": "positive", "tags": [], "expected": "/forgot-password with editable email and enabled submit" },
+        { "id": "TC-LOGIN-006", "title": "A session revoked server-side is sent back to login", "priority": "P0", "type": "negative", "tags": ["session", "security"], "expected": "After DELETE /users/logout on the browser's token and a reload: redirected to /login" },
+        { "id": "TC-LOGIN-007", "title": "Repeated failed logins stay controlled", "priority": "P1", "type": "negative", "tags": ["security", "brute-force"], "expected": "5 attempts all 401/429, never 5xx; lockout absence recorded", "notes": "No lockout exists on this target; asserting one would be a permanent false failure." },
+        { "id": "TC-LOGIN-008", "title": "Password is masked and never sent in the URL", "priority": "P2", "type": "positive", "tags": ["security"], "expected": "type=password; POST; password absent from request and page URLs" },
+        { "id": "TC-LOGIN-009", "title": "Forgot password does not reveal whether an account exists", "priority": "P1", "type": "negative", "tags": ["security", "enumeration", "known-bug"], "expected": "Generic message for unknown emails", "knownBug": "KNOWN-BUG-002" }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "feature": "test-cases/dashboard.feature",
+      "spec": "tests/dashboard/dashboard.spec.ts, tests/dashboard/responsive.spec.ts",
+      "cases": [
+        { "id": "TC-DASH-001", "title": "Widgets finish loading with no first-party errors", "priority": "P0", "type": "positive", "tags": ["smoke"], "expected": "4 cards, filters, add-note, search, counter; no first-party console errors or failed API calls" },
+        { "id": "TC-DASH-002", "title": "Rendered notes and progress counter match the API response", "priority": "P0", "type": "positive", "tags": ["data-accuracy"], "expected": "Seed == API response == rendered titles; counter 1/4" },
+        { "id": "TC-DASH-003", "title": "Category filter shows exactly that category's notes", "priority": "P1", "type": "positive", "tags": ["filter"], "dataSet": ["Home", "Work", "Personal"], "expected": "Exactly the seeded notes of that category; counter scoped and correct" },
+        { "id": "TC-DASH-004", "title": "Returning to \"All\" restores the original list in the original order", "priority": "P2", "type": "positive", "tags": ["filter"], "expected": "Identical titles, same order" },
+        { "id": "TC-DASH-005", "title": "Open notes come first by latest update; completing a note moves it down", "priority": "P1", "type": "positive", "tags": ["sort"], "expected": "Order matches the rule; completed note sinks; counter +1" },
+        { "id": "TC-DASH-006", "title": "Search narrows by title and shows an empty state for no match", "priority": "P2", "type": "positive", "tags": ["search"], "expected": "Single match for 'dentist'; empty state for no match" },
+        { "id": "TC-DASH-007", "title": "After logout the dashboard and its data are not reachable by URL", "priority": "P0", "type": "negative", "tags": ["security", "permissions"], "expected": "Landing page; no cards, add-note or seeded titles via direct URL" },
+        { "id": "TC-DASH-008", "title": "A user cannot open another user's note by direct URL", "priority": "P0", "type": "negative", "tags": ["security", "permissions", "idor"], "expected": "'No note found'; none of the note's content rendered" },
+        { "id": "TC-DASH-009", "title": "Primary note controls are usable on a phone", "priority": "P1", "type": "positive", "tags": ["responsive"], "expected": "Add-note in viewport; search editable; filter works at 412px" },
+        { "id": "TC-DASH-010", "title": "Nothing requires horizontal scrolling on a phone", "priority": "P2", "type": "negative", "tags": ["responsive", "known-bug"], "expected": "scrollWidth <= clientWidth at 412px", "knownBug": "KNOWN-BUG-001" }
+      ]
+    },
+    {
+      "name": "REST API",
+      "feature": "test-cases/api.feature",
+      "spec": "tests/api/notes-api.spec.ts",
+      "cases": [
+        { "id": "TC-API-001", "title": "Health check reports the service up", "priority": "P0", "type": "positive", "tags": ["smoke"], "request": "GET /health-check", "expected": "200, envelope with success = true" },
+        { "id": "TC-API-002", "title": "Register, login and profile return schema-valid bodies with a usable token", "priority": "P0", "type": "positive", "tags": ["auth", "schema"], "request": "POST /users/register → POST /users/login → GET /users/profile", "expected": "201 / 200 / 200, each schema-valid; profile equals registered user" },
+        { "id": "TC-API-003", "title": "Wrong password and unknown email get the identical 401 with no token", "priority": "P0", "type": "negative", "tags": ["auth", "security"], "request": "POST /users/login ×2", "expected": "401 ×2, strict error schema, identical messages" },
+        { "id": "TC-API-004", "title": "A protected route rejects a missing token with 401", "priority": "P0", "type": "negative", "tags": ["auth"], "request": "GET /notes (no header)", "expected": "401; message names x-auth-token" },
+        { "id": "TC-API-005", "title": "A malformed token is rejected with 401, not a 5xx", "priority": "P0", "type": "negative", "tags": ["auth", "security"], "dataSet": ["not-a-real-token", "64 × a", "' OR '1'='1"], "request": "GET /notes", "expected": "401 for each, never 5xx" },
+        { "id": "TC-API-006", "title": "Note CRUD lifecycle, ending with proof the delete really deleted", "priority": "P0", "type": "positive", "tags": ["crud", "schema"], "request": "POST → GET → GET list → PUT → PATCH → DELETE → GET", "expected": "Each step schema-valid; final GET 404; list empty" },
+        { "id": "TC-API-007", "title": "Invalid note input is rejected with 400 and a field-level message, and nothing is stored", "priority": "P1", "type": "negative", "tags": ["validation"], "request": "POST /notes ×4 invalid", "expected": "400 naming the field; nothing stored" },
+        { "id": "TC-API-008", "title": "An unknown note id is 404 and a malformed id is 400 — never 5xx", "priority": "P1", "type": "negative", "tags": ["error-handling"], "request": "GET /notes/:id", "expected": "404 unknown; 400 malformed" },
+        { "id": "TC-API-009", "title": "A user cannot read, change or delete another user's note", "priority": "P0", "type": "negative", "tags": ["security", "authorization", "idor"], "request": "GET/PUT/PATCH/DELETE /notes/:id as another user", "expected": "401/403/404 each; note unchanged" },
+        { "id": "TC-API-010", "title": "A burst of requests is throttled or handled — never 5xx", "priority": "P1", "type": "negative", "tags": ["rate-limiting"], "request": "25 concurrent POST /users/login", "expected": "No 5xx; all 401/429; behaviour recorded", "notes": "Live target returned 401 ×25 — no throttling observed." },
+        { "id": "TC-API-011", "title": "Logout revokes the token server-side", "priority": "P0", "type": "negative", "tags": ["auth", "session"], "request": "DELETE /users/logout, then GET /notes", "expected": "401 with the revoked token" },
+        { "id": "TC-API-012", "title": "Validation errors share one error envelope with no internals leaked", "priority": "P1", "type": "negative", "tags": ["error-handling", "schema"], "request": "4 different invalid requests", "expected": "4xx; strict error schema; no stack traces" },
+        { "id": "TC-API-013", "title": "A malformed JSON body gets the same error envelope as any other 400", "priority": "P2", "type": "negative", "tags": ["error-handling", "schema", "known-bug"], "request": "POST /notes with '{\"title\": \"Broken'", "expected": "400 with { success, status, message }", "knownBug": "KNOWN-BUG-003" }
+      ]
+    }
+  ],
+  "knownBugs": [
+    { "id": "KNOWN-BUG-001", "severity": "medium", "summary": "Every Notes page is 502px wide in a 412px phone viewport — layout wrapper div#core is fixed at 500px.", "test": "TC-DASH-010" },
+    { "id": "KNOWN-BUG-002", "severity": "medium", "summary": "POST /users/forgot-password answers unknown emails with 'No account found with the given email address' — account enumeration.", "test": "TC-LOGIN-009" },
+    { "id": "KNOWN-BUG-003", "severity": "low", "summary": "Malformed JSON returns 400 without the 'status' field and leaks the parser message.", "test": "TC-API-013" }
+  ],
+  "coverage": {
+    "total": 32,
+    "byModule": { "Login": 9, "Dashboard": 10, "REST API": 13 },
+    "byPriority": { "P0": 15, "P1": 11, "P2": 6 },
+    "automated": 32,
+    "automatedTestRuns": 34,
+    "knownBugs": 3
+  }
+}
